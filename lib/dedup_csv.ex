@@ -1,4 +1,11 @@
 defmodule DedupCsv do
+
+  @moduledoc """
+  Takes a CSV file with headers "FirstName,LastName,Email,Phone" and then dedups
+  the rows based on whether the email, phone, or either matches. Only the digits
+  in phone numbers are evaluated for duplicates, and email addresses are lowercased
+  and trimmed before being evaluated as duplicates
+  """
   def main(argv) do
     argv
     |> parse_args
@@ -6,6 +13,10 @@ defmodule DedupCsv do
     |> Enum.each(&IO.write(&1))
   end
 
+  @doc """
+  De-dups a stream of CSV either by :email, :phone, or :email_or_phone. Prints a help
+  message for any other input.
+  """
   def process(:help, _) do
     IO.puts """
     usage: dedup_csv [ email | phone | email_or_phone ] < file.csv
@@ -17,8 +28,11 @@ defmodule DedupCsv do
     stream
     |> decodeCSV
     |> Enum.reduce({%{}, []}, fn
+
       %{"Email" => email} = row, accum -> email |> sanitize_email |> dedup_value(row, accum)
-      _, accum -> accum # the file doesn't have headers
+
+      _, accum -> accum # the file doesn't have headers; skip everything
+
     end)
     |> encodeCSV
   end
@@ -27,8 +41,11 @@ defmodule DedupCsv do
     stream
     |> decodeCSV
     |> Enum.reduce({%{}, []}, fn
+
       %{"Phone" => phone} = row, accum -> phone |> sanitize_phone |> dedup_value(row, accum)
-      _, accum -> accum # the file doesn't have headers
+
+      _, accum -> accum # the file doesn't have headers; skip everything
+
     end)
     |> encodeCSV
   end
@@ -37,6 +54,7 @@ defmodule DedupCsv do
     stream
     |> decodeCSV
     |> Enum.reduce({%{}, []}, fn
+
       %{ "Phone" => phone, "Email" => email } = row, {map, rows} ->
         phone = phone |> sanitize_phone
         email = email |> sanitize_email
@@ -50,7 +68,9 @@ defmodule DedupCsv do
           Map.has_key?(map, phone) or Map.has_key?(map, email) -> { newMap, rows }
           true -> { newMap, [row | rows]}
         end
-      _, accum -> accum
+
+      _, accum -> accum # the file doesn't have headers; skip everything
+
     end)
     |> encodeCSV
   end

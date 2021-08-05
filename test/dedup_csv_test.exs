@@ -13,20 +13,20 @@ defmodule DedupCsvTest do
     input = """
     #{@header}
     Albert,Ortiz,Albert.Ortiz@gmail.com,235.908.1152
-    albert,ortiz,albert.ortiz@gmail.com,235.908.5112
-    Mary,Ortiz,mary.ortiz@me.com,(235) 908-1152
+    albert,ortiz, albert.ortiz@gmail.com ,235.908.5112
+    Mary,Ortiz,mary.ortiz@me.com, (235) 908-1152
     """
 
     assert DedupCsv.process(:email, input |> getStream) |> Enum.join("") == """
     #{@header}
     Albert,Ortiz,Albert.Ortiz@gmail.com,235.908.1152
-    Mary,Ortiz,mary.ortiz@me.com,(235) 908-1152
+    Mary,Ortiz,mary.ortiz@me.com, (235) 908-1152
     """
 
     assert DedupCsv.process(:phone, input |> getStream) |> Enum.join("") == """
     #{@header}
     Albert,Ortiz,Albert.Ortiz@gmail.com,235.908.1152
-    albert,ortiz,albert.ortiz@gmail.com,235.908.5112
+    albert,ortiz, albert.ortiz@gmail.com ,235.908.5112
     """
 
     assert DedupCsv.process(:email_or_phone, input |> getStream) |> Enum.join("") == """
